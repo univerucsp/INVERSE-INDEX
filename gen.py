@@ -16,7 +16,6 @@ def load_word_list():
 
 # Cargar listas de palabras prohibidas para cada archivo
 def load_prohibited_words_for_files():
-    # Puedes modificar la función para cargar desde un archivo o definir las palabras prohibidas específicas para cada archivo
     return {
         f"file_{i+1}.txt": {"washerwoman", "nervier", "frowzier"} if i % 2 == 0 else set()
         for i in range(num_files)
@@ -31,9 +30,9 @@ def generate_real_text(size, word_list, prohibited_words):
         # Elegir una palabra aleatoria del subconjunto de palabras permitidas
         word = random.choice(word_list)
         while word in prohibited_words:
-            word = random.choice(word_list)  # Elegir otra palabra si es prohibida
+            word = random.choice(word_list)  
         text.append(word)
-        current_size += len(word) + 1  # Incluir espacio entre palabras
+        current_size += len(word) + 1  
 
     return ' '.join(text)
 
@@ -41,7 +40,6 @@ def generate_real_text(size, word_list, prohibited_words):
 output_dir = "generated_files"
 os.makedirs(output_dir, exist_ok=True)
 
-# Cargar lista de palabras reales y palabras prohibidas para cada archivo
 word_list = load_word_list()
 prohibited_words_by_file = load_prohibited_words_for_files()
 
@@ -49,7 +47,6 @@ prohibited_words_by_file = load_prohibited_words_for_files()
 sample_size = 300
 selected_words = random.sample(word_list, min(sample_size, len(word_list)))
 
-# Crear los archivos
 for i in range(num_files):
     file_name = f"file_{i+1}.txt"
     file_path = os.path.join(output_dir, file_name)
