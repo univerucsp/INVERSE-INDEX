@@ -16,30 +16,24 @@
 
 namespace fs = std::filesystem;
 
-// Define an inverted index type
 using InvertedIndex = std::unordered_map<std::string, std::unordered_set<std::string>>;
 
-// Mutex for synchronizing access to the index
 std::mutex index_mutex;
 
-// Function to process a segment of a file and return a local index
 InvertedIndex processSegment(const std::string& segment, const std::string& filename) {
     InvertedIndex local_index;
     std::istringstream iss(segment);
     std::string word;
     while (iss >> word) {
-        // Remove punctuation and convert to lowercase
         word.erase(std::remove_if(word.begin(), word.end(), ::ispunct), word.end());
         std::transform(word.begin(), word.end(), word.begin(), ::tolower);
 
-        // Add the file to the set of files containing the word in the local index
         local_index[word].insert(filename);
     }
     return local_index;
 }
 
 void updateIndex(const std::string& filename, InvertedIndex& index) {
-    // Open the file to get its size
     std::ifstream file(filename, std::ios::binary | std::ios::ate);
     if (!file.is_open()) {
         std::cerr << "Failed to open file: " << filename << std::endl;
@@ -48,13 +42,11 @@ void updateIndex(const std::string& filename, InvertedIndex& index) {
     std::streamsize file_size = file.tellg();
     file.seekg(0, std::ios::beg);
 
-    // Get the number of threads
     const unsigned int num_threads = std::thread::hardware_concurrency();
     std::vector<std::thread> threads;
     std::vector<std::string> segments(num_threads);
     std::vector<InvertedIndex> local_indices(num_threads);
 
-    // Divide the file into segments
     std::vector<std::ifstream> segment_files(num_threads);
     std::vector<std::streampos> segment_offsets(num_threads);
     std::vector<std::streamsize> segment_sizes(num_threads);
@@ -68,7 +60,6 @@ void updateIndex(const std::string& filename, InvertedIndex& index) {
         offset = next_offset;
     }
 
-    // Launch threads to read each segment
     for (unsigned int i = 0; i < num_threads; ++i) {
         threads.emplace_back([i, &filename, &segment_files, &segment_offsets, &segment_sizes, &local_indices]() {
             // Open the file segment for reading
@@ -82,12 +73,10 @@ void updateIndex(const std::string& filename, InvertedIndex& index) {
         });
     }
 
-    // Join threads
     for (auto& t : threads) {
         t.join();
     }
 
-    // Combine local indices into the global index
     for (const auto& local_index : local_indices) {
         std::lock_guard<std::mutex> lock(index_mutex);
         for (const auto& [word, files] : local_index) {
@@ -106,7 +95,6 @@ void buildIndex(const std::string& directory, InvertedIndex& index) {
     }
 }
 
-// Function to search for a word in the index
 void search(const std::string& word, const InvertedIndex& index) {
     auto it = index.find(word);
     if (it != index.end()) {
@@ -128,7 +116,6 @@ int main() {
         std::cout << "Enter a word to search: ";
         std::cin >> searchWord;
 
-        // Remove punctuation and convert to lowercase for search
         searchWord.erase(std::remove_if(searchWord.begin(), searchWord.end(), ::ispunct), searchWord.end());
         std::transform(searchWord.begin(), searchWord.end(), searchWord.begin(), ::tolower);
 
