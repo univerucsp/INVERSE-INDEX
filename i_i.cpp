@@ -62,7 +62,6 @@ void updateIndex(const std::string& filename, InvertedIndex& index) {
 
     for (unsigned int i = 0; i < num_threads; ++i) {
         threads.emplace_back([i, &filename, &segment_files, &segment_offsets, &segment_sizes, &local_indices]() {
-            // Open the file segment for reading
             segment_files[i].open(filename, std::ios::binary);
             segment_files[i].seekg(segment_offsets[i]);
             std::vector<char> buffer(segment_sizes[i]);
